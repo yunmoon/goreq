@@ -308,11 +308,10 @@ func (r Request) Do() (*Response, error) {
 			// proxy address is in a wrong format
 			return nil, &Error{Err: err}
 		}
-
 		proxyHeader := make(http.Header)
 		if r.proxyConnectHeaders != nil {
 			for _, header := range r.proxyConnectHeaders {
-				proxyHeader.Add(header.name, header.value)
+				proxyHeader[header.name] = []string{header.value}
 			}
 		}
 
@@ -491,7 +490,7 @@ func (r Request) NewRequest() (*http.Request, error) {
 	}
 	if r.headers != nil {
 		for _, header := range r.headers {
-			req.Header.Add(header.name, header.value)
+			req.Header[header.name] = []string{header.value}
 		}
 	}
 

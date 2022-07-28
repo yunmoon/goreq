@@ -5,6 +5,8 @@ import (
 	"compress/zlib"
 	"encoding/base64"
 	"fmt"
+	"github.com/franela/goblin"
+	"github.com/onsi/gomega"
 	"io"
 	"io/ioutil"
 	"math"
@@ -15,9 +17,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	. "github.com/franela/goblin"
-	. "github.com/onsi/gomega"
 )
 
 type Query struct {
@@ -37,9 +36,9 @@ func TestRequest(t *testing.T) {
 	valuesQuery.Add("friend", "jonas")
 	valuesQuery.Add("friend", "peter")
 
-	g := Goblin(t)
+	g := goblin.Goblin(t)
 
-	RegisterFailHandler(func(m string, _ ...int) { g.Fail(m) })
+	gomega.RegisterFailHandler(func(m string, _ ...int) { g.Fail(m) })
 
 	g.Describe("Request", func() {
 
@@ -191,20 +190,20 @@ func TestRequest(t *testing.T) {
 				g.It("Should do a GET", func() {
 					res, err := Request{Uri: ts.URL + "/foo"}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("bar"))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal("bar"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Should return ContentLength", func() {
 					res, err := Request{Uri: ts.URL + "/foo"}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("bar"))
-					Expect(res.StatusCode).Should(Equal(200))
-					Expect(res.ContentLength).Should(Equal(int64(3)))
+					gomega.Expect(str).Should(gomega.Equal("bar"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
+					gomega.Expect(res.ContentLength).Should(gomega.Equal(int64(3)))
 				})
 
 				g.It("Should do a GET with querystring", func() {
@@ -213,10 +212,10 @@ func TestRequest(t *testing.T) {
 						QueryString: query,
 					}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("/getquery?limit=3&skip=5"))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal("/getquery?limit=3&skip=5"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Should support url.Values in querystring", func() {
@@ -225,132 +224,132 @@ func TestRequest(t *testing.T) {
 						QueryString: valuesQuery,
 					}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("/getquery?friend=jonas&friend=peter&name=marcos"))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal("/getquery?friend=jonas&friend=peter&name=marcos"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Should support sending string body", func() {
 					res, err := Request{Uri: ts.URL + "/getbody", Body: "foo"}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("foo"))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal("foo"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Shoulds support sending a Reader body", func() {
 					res, err := Request{Uri: ts.URL + "/getbody", Body: strings.NewReader("foo")}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("foo"))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal("foo"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Support sending any object that is json encodable", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Uri: ts.URL + "/getbody", Body: obj}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Support sending an array of bytes body", func() {
 					bdy := []byte{'f', 'o', 'o'}
 					res, err := Request{Uri: ts.URL + "/getbody", Body: bdy}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("foo"))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal("foo"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Should return an error when body is not JSON encodable", func() {
 					res, err := Request{Uri: ts.URL + "/getbody", Body: math.NaN()}.Do()
 
-					Expect(res).Should(BeNil())
-					Expect(err).ShouldNot(BeNil())
+					gomega.Expect(res).Should(gomega.BeNil())
+					gomega.Expect(err).ShouldNot(gomega.BeNil())
 				})
 
 				g.It("Should return a gzip reader if Content-Encoding is 'gzip'", func() {
 					res, err := Request{Uri: ts.URL + "/compressed", Compression: Gzip()}.Do()
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(err).Should(BeNil())
-					Expect(res.Body.compressedReader).ShouldNot(BeNil())
-					Expect(res.Body.reader).ShouldNot(BeNil())
-					Expect(string(b)).Should(Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
-					Expect(res.Body.compressedReader).ShouldNot(BeNil())
-					Expect(res.Body.reader).ShouldNot(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
+					gomega.Expect(res.Body.compressedReader).ShouldNot(gomega.BeNil())
+					gomega.Expect(res.Body.reader).ShouldNot(gomega.BeNil())
+					gomega.Expect(string(b)).Should(gomega.Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
+					gomega.Expect(res.Body.compressedReader).ShouldNot(gomega.BeNil())
+					gomega.Expect(res.Body.reader).ShouldNot(gomega.BeNil())
 				})
 
 				g.It("Should close reader and compresserReader on Body close", func() {
 					res, err := Request{Uri: ts.URL + "/compressed", Compression: Gzip()}.Do()
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 
 					_, e := ioutil.ReadAll(res.Body.reader)
-					Expect(e).Should(BeNil())
+					gomega.Expect(e).Should(gomega.BeNil())
 					_, e = ioutil.ReadAll(res.Body.compressedReader)
-					Expect(e).Should(BeNil())
+					gomega.Expect(e).Should(gomega.BeNil())
 
 					_, e = ioutil.ReadAll(res.Body.reader)
 					//when reading body again it doesnt error
-					Expect(e).Should(BeNil())
+					gomega.Expect(e).Should(gomega.BeNil())
 
 					res.Body.Close()
 					_, e = ioutil.ReadAll(res.Body.reader)
 					//error because body is already closed
-					Expect(e).ShouldNot(BeNil())
+					gomega.Expect(e).ShouldNot(gomega.BeNil())
 
 					_, e = ioutil.ReadAll(res.Body.compressedReader)
 					//compressedReaders dont error on reading when closed
-					Expect(e).Should(BeNil())
+					gomega.Expect(e).Should(gomega.BeNil())
 				})
 
 				g.It("Should not return a gzip reader if Content-Encoding is not 'gzip'", func() {
 					res, err := Request{Uri: ts.URL + "/compressed_and_return_compressed_without_header", Compression: Gzip()}.Do()
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(err).Should(BeNil())
-					Expect(string(b)).ShouldNot(Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
+					gomega.Expect(err).Should(gomega.BeNil())
+					gomega.Expect(string(b)).ShouldNot(gomega.Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
 				})
 
 				g.It("Should return a deflate reader if Content-Encoding is 'deflate'", func() {
 					res, err := Request{Uri: ts.URL + "/compressed_deflate", Compression: Deflate()}.Do()
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(err).Should(BeNil())
-					Expect(string(b)).Should(Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
+					gomega.Expect(err).Should(gomega.BeNil())
+					gomega.Expect(string(b)).Should(gomega.Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
 				})
 
 				g.It("Should not return a delfate reader if Content-Encoding is not 'deflate'", func() {
 					res, err := Request{Uri: ts.URL + "/compressed_deflate_and_return_compressed_without_header", Compression: Deflate()}.Do()
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(err).Should(BeNil())
-					Expect(string(b)).ShouldNot(Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
+					gomega.Expect(err).Should(gomega.BeNil())
+					gomega.Expect(string(b)).ShouldNot(gomega.Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
 				})
 
 				g.It("Should return a deflate reader when using zlib if Content-Encoding is 'deflate'", func() {
 					res, err := Request{Uri: ts.URL + "/compressed_deflate", Compression: Zlib()}.Do()
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(err).Should(BeNil())
-					Expect(string(b)).Should(Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
+					gomega.Expect(err).Should(gomega.BeNil())
+					gomega.Expect(string(b)).Should(gomega.Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
 				})
 
 				g.It("Should not return a delfate reader when using zlib if Content-Encoding is not 'deflate'", func() {
 					res, err := Request{Uri: ts.URL + "/compressed_deflate_and_return_compressed_without_header", Compression: Zlib()}.Do()
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(err).Should(BeNil())
-					Expect(string(b)).ShouldNot(Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
+					gomega.Expect(err).Should(gomega.BeNil())
+					gomega.Expect(string(b)).ShouldNot(gomega.Equal("{\"foo\":\"bar\",\"fuu\":\"baz\"}"))
 				})
 
 				g.It("Should send cookies from the cookiejar", func() {
 					uri, err := url.Parse(ts.URL + "/getcookies")
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 
 					jar, err := cookiejar.New(nil)
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 
 					jar.SetCookies(uri, []*http.Cookie{
 						{
@@ -365,11 +364,11 @@ func TestRequest(t *testing.T) {
 						CookieJar: jar,
 					}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("bar=foo"))
-					Expect(res.StatusCode).Should(Equal(200))
-					Expect(res.ContentLength).Should(Equal(int64(7)))
+					gomega.Expect(str).Should(gomega.Equal("bar=foo"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
+					gomega.Expect(res.ContentLength).Should(gomega.Equal(int64(7)))
 				})
 
 				g.It("Should send cookies added with .AddCookie", func() {
@@ -381,11 +380,11 @@ func TestRequest(t *testing.T) {
 					req.AddCookie(c2)
 
 					res, err := req.Do()
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("c1=v1; c2=v2"))
-					Expect(res.StatusCode).Should(Equal(200))
-					Expect(res.ContentLength).Should(Equal(int64(12)))
+					gomega.Expect(str).Should(gomega.Equal("c1=v1; c2=v2"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
+					gomega.Expect(res.ContentLength).Should(gomega.Equal(int64(12)))
 				})
 
 				g.It("Should send cookies added with .WithCookie", func() {
@@ -396,34 +395,34 @@ func TestRequest(t *testing.T) {
 						WithCookie(c1).
 						WithCookie(c2).
 						Do()
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("c1=v2; c2=v3"))
-					Expect(res.StatusCode).Should(Equal(200))
-					Expect(res.ContentLength).Should(Equal(int64(12)))
+					gomega.Expect(str).Should(gomega.Equal("c1=v2; c2=v3"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
+					gomega.Expect(res.ContentLength).Should(gomega.Equal(int64(12)))
 				})
 
 				g.It("Should populate the cookiejar", func() {
 					uri, err := url.Parse(ts.URL + "/setcookies")
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 
 					jar, _ := cookiejar.New(nil)
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 
 					res, err := Request{
 						Uri:       ts.URL + "/setcookies",
 						CookieJar: jar,
 					}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 
-					Expect(res.Header.Get("Set-Cookie")).Should(Equal("foobar=42 ; Path=/"))
+					gomega.Expect(res.Header.Get("Set-Cookie")).Should(gomega.Equal("foobar=42 ; Path=/"))
 
 					cookies := jar.Cookies(uri)
-					Expect(len(cookies)).Should(Equal(1))
+					gomega.Expect(len(cookies)).Should(gomega.Equal(1))
 
 					cookie := cookies[0]
-					Expect(*cookie).Should(Equal(http.Cookie{
+					gomega.Expect(*cookie).Should(gomega.Equal(http.Cookie{
 						Name:  "foobar",
 						Value: "42",
 					}))
@@ -434,50 +433,50 @@ func TestRequest(t *testing.T) {
 				g.It("Should send a string", func() {
 					res, err := Request{Method: "POST", Uri: ts.URL, Body: "foo"}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("foo"))
-					Expect(res.StatusCode).Should(Equal(201))
-					Expect(res.Header.Get("Location")).Should(Equal(ts.URL + "/123"))
+					gomega.Expect(str).Should(gomega.Equal("foo"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
+					gomega.Expect(res.Header.Get("Location")).Should(gomega.Equal(ts.URL + "/123"))
 				})
 
 				g.It("Should send a Reader", func() {
 					res, err := Request{Method: "POST", Uri: ts.URL, Body: strings.NewReader("foo")}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("foo"))
-					Expect(res.StatusCode).Should(Equal(201))
-					Expect(res.Header.Get("Location")).Should(Equal(ts.URL + "/123"))
+					gomega.Expect(str).Should(gomega.Equal("foo"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
+					gomega.Expect(res.Header.Get("Location")).Should(gomega.Equal(ts.URL + "/123"))
 				})
 
 				g.It("Send any object that is json encodable", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL, Body: obj}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
-					Expect(res.Header.Get("Location")).Should(Equal(ts.URL + "/123"))
+					gomega.Expect(str).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
+					gomega.Expect(res.Header.Get("Location")).Should(gomega.Equal(ts.URL + "/123"))
 				})
 
 				g.It("Send an array of bytes", func() {
 					bdy := []byte{'f', 'o', 'o'}
 					res, err := Request{Method: "POST", Uri: ts.URL, Body: bdy}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("foo"))
-					Expect(res.StatusCode).Should(Equal(201))
-					Expect(res.Header.Get("Location")).Should(Equal(ts.URL + "/123"))
+					gomega.Expect(str).Should(gomega.Equal("foo"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
+					gomega.Expect(res.Header.Get("Location")).Should(gomega.Equal(ts.URL + "/123"))
 				})
 
 				g.It("Should return an error when body is not JSON encodable", func() {
 					res, err := Request{Method: "POST", Uri: ts.URL, Body: math.NaN()}.Do()
 
-					Expect(res).Should(BeNil())
-					Expect(err).ShouldNot(BeNil())
+					gomega.Expect(res).Should(gomega.BeNil())
+					gomega.Expect(err).ShouldNot(gomega.BeNil())
 				})
 
 				g.It("Should do a POST with querystring", func() {
@@ -489,153 +488,153 @@ func TestRequest(t *testing.T) {
 						QueryString: query,
 					}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("/getquery?limit=3&skip=5"))
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(str).Should(gomega.Equal("/getquery?limit=3&skip=5"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Should send body as gzip if compressed", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed", Body: obj, Compression: Gzip()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(str).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as deflate if compressed", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_deflate", Body: obj, Compression: Deflate()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(str).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as deflate using zlib if compressed", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_deflate", Body: obj, Compression: Zlib()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(str).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as gzip if compressed and parse return body", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_and_return_compressed", Body: obj, Compression: Gzip()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(string(b)).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(string(b)).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as deflate if compressed and parse return body", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_deflate_and_return_compressed", Body: obj, Compression: Deflate()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(string(b)).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(string(b)).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as deflate using zlib if compressed and parse return body", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_deflate_and_return_compressed", Body: obj, Compression: Zlib()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(string(b)).Should(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(string(b)).Should(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as gzip if compressed and not parse return body if header not set ", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_and_return_compressed_without_header", Body: obj, Compression: Gzip()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(string(b)).ShouldNot(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(string(b)).ShouldNot(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as deflate if compressed and not parse return body if header not set ", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_deflate_and_return_compressed_without_header", Body: obj, Compression: Deflate()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(string(b)).ShouldNot(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(string(b)).ShouldNot(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 
 				g.It("Should send body as deflate using zlib if compressed and not parse return body if header not set ", func() {
 					obj := map[string]string{"foo": "bar"}
 					res, err := Request{Method: "POST", Uri: ts.URL + "/compressed_deflate_and_return_compressed_without_header", Body: obj, Compression: Zlib()}.Do()
 
-					Expect(err).Should(BeNil())
+					gomega.Expect(err).Should(gomega.BeNil())
 					b, _ := ioutil.ReadAll(res.Body)
-					Expect(string(b)).ShouldNot(Equal(`{"foo":"bar"}`))
-					Expect(res.StatusCode).Should(Equal(201))
+					gomega.Expect(string(b)).ShouldNot(gomega.Equal(`{"foo":"bar"}`))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(201))
 				})
 			})
 
 			g.It("Should do a PUT", func() {
 				res, err := Request{Method: "PUT", Uri: ts.URL + "/foo/123", Body: "foo"}.Do()
 
-				Expect(err).Should(BeNil())
+				gomega.Expect(err).Should(gomega.BeNil())
 				str, _ := res.Body.ToString()
-				Expect(str).Should(Equal("foo"))
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(str).Should(gomega.Equal("foo"))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.It("Should do a DELETE", func() {
 				res, err := Request{Method: "DELETE", Uri: ts.URL + "/foo/123"}.Do()
 
-				Expect(err).Should(BeNil())
-				Expect(res.StatusCode).Should(Equal(204))
+				gomega.Expect(err).Should(gomega.BeNil())
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(204))
 			})
 
 			g.It("Should do a OPTIONS", func() {
 				res, err := Request{Method: "OPTIONS", Uri: ts.URL + "/foo"}.Do()
 
-				Expect(err).Should(BeNil())
+				gomega.Expect(err).Should(gomega.BeNil())
 				str, _ := res.Body.ToString()
-				Expect(str).Should(Equal("bar"))
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(str).Should(gomega.Equal("bar"))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.It("Should do a PATCH", func() {
 				res, err := Request{Method: "PATCH", Uri: ts.URL + "/foo"}.Do()
 
-				Expect(err).Should(BeNil())
+				gomega.Expect(err).Should(gomega.BeNil())
 				str, _ := res.Body.ToString()
-				Expect(str).Should(Equal("bar"))
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(str).Should(gomega.Equal("bar"))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.It("Should do a TRACE", func() {
 				res, err := Request{Method: "TRACE", Uri: ts.URL + "/foo"}.Do()
 
-				Expect(err).Should(BeNil())
+				gomega.Expect(err).Should(gomega.BeNil())
 				str, _ := res.Body.ToString()
-				Expect(str).Should(Equal("bar"))
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(str).Should(gomega.Equal("bar"))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.It("Should do a custom method", func() {
 				res, err := Request{Method: "FOOBAR", Uri: ts.URL + "/foo"}.Do()
 
-				Expect(err).Should(BeNil())
+				gomega.Expect(err).Should(gomega.BeNil())
 				str, _ := res.Body.ToString()
-				Expect(str).Should(Equal("bar"))
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(str).Should(gomega.Equal("bar"))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.Describe("Responses", func() {
@@ -643,14 +642,14 @@ func TestRequest(t *testing.T) {
 					res, _ := Request{Method: "POST", Uri: ts.URL, Body: "foo bar"}.Do()
 
 					str, _ := res.Body.ToString()
-					Expect(str).Should(Equal("foo bar"))
+					gomega.Expect(str).Should(gomega.Equal("foo bar"))
 				})
 
 				g.It("Should handle io.ReaderCloser", func() {
 					res, _ := Request{Method: "POST", Uri: ts.URL, Body: "foo bar"}.Do()
 
 					body, _ := ioutil.ReadAll(res.Body)
-					Expect(string(body)).Should(Equal("foo bar"))
+					gomega.Expect(string(body)).Should(gomega.Equal("foo bar"))
 				})
 
 				g.It("Should handle parsing JSON", func() {
@@ -660,13 +659,13 @@ func TestRequest(t *testing.T) {
 
 					res.Body.FromJsonTo(&foobar)
 
-					Expect(foobar).Should(Equal(map[string]string{"foo": "bar"}))
+					gomega.Expect(foobar).Should(gomega.Equal(map[string]string{"foo": "bar"}))
 				})
 
 				g.It("Should return the original request response", func() {
 					res, _ := Request{Method: "POST", Uri: ts.URL, Body: `{"foo": "bar"}`}.Do()
 
-					Expect(res.Response).ShouldNot(BeNil())
+					gomega.Expect(res.Response).ShouldNot(gomega.BeNil())
 				})
 			})
 			g.Describe("Redirects", func() {
@@ -674,7 +673,7 @@ func TestRequest(t *testing.T) {
 					res, _ := Request{
 						Uri: ts.URL + "/redirect_test/301",
 					}.Do()
-					Expect(res.StatusCode).Should(Equal(301))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(301))
 				})
 
 				g.It("Should not follow if method is explicitly specified", func() {
@@ -682,8 +681,8 @@ func TestRequest(t *testing.T) {
 						Method: "GET",
 						Uri:    ts.URL + "/redirect_test/301",
 					}.Do()
-					Expect(res.StatusCode).Should(Equal(301))
-					Expect(err).ShouldNot(HaveOccurred())
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(301))
+					gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 				})
 
 				g.It("Should throw an error if MaxRedirect limit is exceeded", func() {
@@ -692,8 +691,8 @@ func TestRequest(t *testing.T) {
 						MaxRedirects: 1,
 						Uri:          ts.URL + "/redirect_test/301",
 					}.Do()
-					Expect(res.StatusCode).Should(Equal(302))
-					Expect(err).Should(HaveOccurred())
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(302))
+					gomega.Expect(err).Should(gomega.HaveOccurred())
 				})
 
 				g.It("Should copy request headers headers when redirecting if specified", func() {
@@ -705,8 +704,8 @@ func TestRequest(t *testing.T) {
 					}
 					req.AddHeader("Testheader", "TestValue")
 					res, _ := req.Do()
-					Expect(res.StatusCode).Should(Equal(200))
-					Expect(requestHeaders.Get("Testheader")).Should(Equal("TestValue"))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
+					gomega.Expect(requestHeaders.Get("Testheader")).Should(gomega.Equal("TestValue"))
 				})
 
 				g.It("Should follow only specified number of MaxRedirects", func() {
@@ -714,22 +713,22 @@ func TestRequest(t *testing.T) {
 						Uri:          ts.URL + "/redirect_test/301",
 						MaxRedirects: 1,
 					}.Do()
-					Expect(res.StatusCode).Should(Equal(302))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(302))
 					res, _ = Request{
 						Uri:          ts.URL + "/redirect_test/301",
 						MaxRedirects: 2,
 					}.Do()
-					Expect(res.StatusCode).Should(Equal(303))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(303))
 					res, _ = Request{
 						Uri:          ts.URL + "/redirect_test/301",
 						MaxRedirects: 3,
 					}.Do()
-					Expect(res.StatusCode).Should(Equal(307))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(307))
 					res, _ = Request{
 						Uri:          ts.URL + "/redirect_test/301",
 						MaxRedirects: 4,
 					}.Do()
-					Expect(res.StatusCode).Should(Equal(200))
+					gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				})
 
 				g.It("Should return final URL of the response when redirecting", func() {
@@ -737,7 +736,7 @@ func TestRequest(t *testing.T) {
 						Uri:          ts.URL + "/redirect_test/destination",
 						MaxRedirects: 2,
 					}.Do()
-					Expect(res.Uri).Should(Equal(ts.URL + "/destination"))
+					gomega.Expect(res.Uri).Should(gomega.Equal(ts.URL + "/destination"))
 				})
 			})
 		})
@@ -750,10 +749,10 @@ func TestRequest(t *testing.T) {
 					res, err := Request{Uri: "http://10.255.255.1"}.Do()
 					elapsed := time.Since(start)
 
-					Expect(elapsed).Should(BeNumerically("<", 1100*time.Millisecond))
-					Expect(elapsed).Should(BeNumerically(">=", 1000*time.Millisecond))
-					Expect(res).Should(BeNil())
-					Expect(err.(*Error).Timeout()).Should(BeTrue())
+					gomega.Expect(elapsed).Should(gomega.BeNumerically("<", 1100*time.Millisecond))
+					gomega.Expect(elapsed).Should(gomega.BeNumerically(">=", 1000*time.Millisecond))
+					gomega.Expect(res).Should(gomega.BeNil())
+					gomega.Expect(err.(*Error).Timeout()).Should(gomega.BeTrue())
 				})
 				g.It("Should connect timeout after a custom amount of time", func() {
 					SetConnectTimeout(100 * time.Millisecond)
@@ -761,10 +760,10 @@ func TestRequest(t *testing.T) {
 					res, err := Request{Uri: "http://10.255.255.1"}.Do()
 					elapsed := time.Since(start)
 
-					Expect(elapsed).Should(BeNumerically("<", 150*time.Millisecond))
-					Expect(elapsed).Should(BeNumerically(">=", 100*time.Millisecond))
-					Expect(res).Should(BeNil())
-					Expect(err.(*Error).Timeout()).Should(BeTrue())
+					gomega.Expect(elapsed).Should(gomega.BeNumerically("<", 150*time.Millisecond))
+					gomega.Expect(elapsed).Should(gomega.BeNumerically(">=", 100*time.Millisecond))
+					gomega.Expect(res).Should(gomega.BeNil())
+					gomega.Expect(err.(*Error).Timeout()).Should(gomega.BeTrue())
 				})
 				g.It("Should connect timeout after a custom amount of time even with method set", func() {
 					SetConnectTimeout(100 * time.Millisecond)
@@ -776,10 +775,10 @@ func TestRequest(t *testing.T) {
 					res, err := request.Do()
 					elapsed := time.Since(start)
 
-					Expect(elapsed).Should(BeNumerically("<", 150*time.Millisecond))
-					Expect(elapsed).Should(BeNumerically(">=", 100*time.Millisecond))
-					Expect(res).Should(BeNil())
-					Expect(err.(*Error).Timeout()).Should(BeTrue())
+					gomega.Expect(elapsed).Should(gomega.BeNumerically("<", 150*time.Millisecond))
+					gomega.Expect(elapsed).Should(gomega.BeNumerically(">=", 100*time.Millisecond))
+					gomega.Expect(res).Should(gomega.BeNil())
+					gomega.Expect(err.(*Error).Timeout()).Should(gomega.BeTrue())
 				})
 			})
 
@@ -804,10 +803,10 @@ func TestRequest(t *testing.T) {
 					res, err := Request{Uri: ts.URL, Timeout: 500 * time.Millisecond}.Do()
 					elapsed := time.Since(start)
 
-					Expect(elapsed).Should(BeNumerically("<", 550*time.Millisecond))
-					Expect(elapsed).Should(BeNumerically(">=", 500*time.Millisecond))
-					Expect(res).Should(BeNil())
-					Expect(err.(*Error).Timeout()).Should(BeTrue())
+					gomega.Expect(elapsed).Should(gomega.BeNumerically("<", 550*time.Millisecond))
+					gomega.Expect(elapsed).Should(gomega.BeNumerically(">=", 500*time.Millisecond))
+					gomega.Expect(res).Should(gomega.BeNil())
+					gomega.Expect(err.(*Error).Timeout()).Should(gomega.BeTrue())
 				})
 				g.It("Should request timeout after a custom amount of time even with proxy", func() {
 					proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -824,10 +823,10 @@ func TestRequest(t *testing.T) {
 					res, err := request.Do()
 					elapsed := time.Since(start)
 
-					Expect(elapsed).Should(BeNumerically("<", 550*time.Millisecond))
-					Expect(elapsed).Should(BeNumerically(">=", 500*time.Millisecond))
-					Expect(res).Should(BeNil())
-					Expect(err.(*Error).Timeout()).Should(BeTrue())
+					gomega.Expect(elapsed).Should(gomega.BeNumerically("<", 550*time.Millisecond))
+					gomega.Expect(elapsed).Should(gomega.BeNumerically(">=", 500*time.Millisecond))
+					gomega.Expect(res).Should(gomega.BeNil())
+					gomega.Expect(err.(*Error).Timeout()).Should(gomega.BeTrue())
 				})
 			})
 		})
@@ -835,8 +834,8 @@ func TestRequest(t *testing.T) {
 		g.Describe("Misc", func() {
 			g.It("Should set default golang user agent when not explicitly passed", func() {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					Expect(r.Header.Get("User-Agent")).ShouldNot(BeZero())
-					Expect(r.Host).Should(Equal("foobar.com"))
+					gomega.Expect(r.Header.Get("User-Agent")).ShouldNot(gomega.BeZero())
+					gomega.Expect(r.Host).Should(gomega.Equal("foobar.com"))
 
 					w.WriteHeader(200)
 				}))
@@ -844,19 +843,19 @@ func TestRequest(t *testing.T) {
 
 				req := Request{Uri: ts.URL, Host: "foobar.com"}
 				res, err := req.Do()
-				Expect(err).ShouldNot(HaveOccurred())
+				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.It("Should offer to set request headers", func() {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					Expect(r.Header.Get("User-Agent")).Should(Equal("foobaragent"))
-					Expect(r.Host).Should(Equal("foobar.com"))
-					Expect(r.Header.Get("Accept")).Should(Equal("application/json"))
-					Expect(r.Header.Get("Content-Type")).Should(Equal("application/json"))
-					Expect(r.Header.Get("X-Custom")).Should(Equal("foobar"))
-					Expect(r.Header.Get("X-Custom2")).Should(Equal("barfoo"))
+					gomega.Expect(r.Header.Get("User-Agent")).Should(gomega.Equal("foobaragent"))
+					gomega.Expect(r.Host).Should(gomega.Equal("foobar.com"))
+					gomega.Expect(r.Header.Get("Accept")).Should(gomega.Equal("application/json"))
+					gomega.Expect(r.Header.Get("Content-Type")).Should(gomega.Equal("application/json"))
+					gomega.Expect(r.Header.Get("X-Custom")).Should(gomega.Equal("foobar"))
+					gomega.Expect(r.Header.Get("X-Custom2")).Should(gomega.Equal("barfoo"))
 
 					w.WriteHeader(200)
 				}))
@@ -866,12 +865,12 @@ func TestRequest(t *testing.T) {
 				req.AddHeader("X-Custom", "foobar")
 				res, _ := req.WithHeader("X-Custom2", "barfoo").Do()
 
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.It("Should call hook before request", func() {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					Expect(r.Header.Get("X-Custom")).Should(Equal("foobar"))
+					gomega.Expect(r.Header.Get("X-Custom")).Should(gomega.Equal("foobar"))
 
 					w.WriteHeader(200)
 				}))
@@ -883,13 +882,13 @@ func TestRequest(t *testing.T) {
 				req := Request{Uri: ts.URL, OnBeforeRequest: hook}
 				res, _ := req.Do()
 
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 
 			g.It("Should not create a body by defualt", func() {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					b, _ := ioutil.ReadAll(r.Body)
-					Expect(b).Should(HaveLen(0))
+					gomega.Expect(b).Should(gomega.HaveLen(0))
 					w.WriteHeader(200)
 				}))
 				defer ts.Close()
@@ -910,8 +909,8 @@ func TestRequest(t *testing.T) {
 				}
 				res, _ := req.Do()
 
-				Expect(DefaultClient.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify).Should(Equal(true))
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(DefaultClient.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify).Should(gomega.Equal(true))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 			})
 			g.It("Should work if a different transport is specified", func() {
 				ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -928,8 +927,8 @@ func TestRequest(t *testing.T) {
 				}
 				res, _ := req.Do()
 
-				Expect(DefaultClient.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify).Should(Equal(true))
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(DefaultClient.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify).Should(gomega.Equal(true))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 
 				DefaultTransport = currentTransport
 
@@ -940,8 +939,8 @@ func TestRequest(t *testing.T) {
 				}
 
 				request, _ := req.NewRequest()
-				Expect(request).ShouldNot(BeNil())
-				Expect(request.Host).Should(Equal(req.Host))
+				gomega.Expect(request).ShouldNot(gomega.BeNil())
+				gomega.Expect(request.Host).Should(gomega.Equal(req.Host))
 			})
 
 			g.It("Response should allow to cancel in-flight request", func() {
@@ -987,16 +986,16 @@ func TestRequest(t *testing.T) {
 				var foobar map[string]string
 
 				err := res.Body.FromJsonTo(&foobar)
-				Expect(err).Should(HaveOccurred())
+				gomega.Expect(err).Should(gomega.HaveOccurred())
 			})
 			g.It("Should handle Url parsing errors", func() {
 				_, err := Request{Uri: ":"}.Do()
 
-				Expect(err).ShouldNot(BeNil())
+				gomega.Expect(err).ShouldNot(gomega.BeNil())
 			})
 			g.It("Should handle DNS errors", func() {
 				_, err := Request{Uri: "http://.localhost"}.Do()
-				Expect(err).ShouldNot(BeNil())
+				gomega.Expect(err).ShouldNot(gomega.BeNil())
 			})
 		})
 
@@ -1031,38 +1030,38 @@ func TestRequest(t *testing.T) {
 			g.It("Should use Proxy", func() {
 				proxiedHost := "www.google.com"
 				res, err := Request{Uri: "http://" + proxiedHost, Proxy: ts.URL}.Do()
-				Expect(err).Should(BeNil())
-				Expect(res.Header.Get("x-forwarded-for")).Should(Equal("test"))
-				Expect(lastReq).ShouldNot(BeNil())
-				Expect(lastReq.Host).Should(Equal(proxiedHost))
+				gomega.Expect(err).Should(gomega.BeNil())
+				gomega.Expect(res.Header.Get("x-forwarded-for")).Should(gomega.Equal("test"))
+				gomega.Expect(lastReq).ShouldNot(gomega.BeNil())
+				gomega.Expect(lastReq.Host).Should(gomega.Equal(proxiedHost))
 			})
 
 			g.It("Should not redirect if MaxRedirects is not set", func() {
 				res, err := Request{Uri: ts.URL + "/redirect_test/301", Proxy: ts.URL}.Do()
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(res.StatusCode).Should(Equal(301))
+				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(301))
 			})
 
 			g.It("Should use Proxy authentication", func() {
 				proxiedHost := "www.google.com"
 				uri := strings.Replace(ts.URL, "http://", "http://user:pass@", -1)
 				res, err := Request{Uri: "http://" + proxiedHost, Proxy: uri}.Do()
-				Expect(err).Should(BeNil())
-				Expect(res.Header.Get("x-forwarded-for")).Should(Equal("test"))
-				Expect(lastReq).ShouldNot(BeNil())
-				Expect(lastReq.Header.Get("Proxy-Authorization")).Should(Equal("Basic dXNlcjpwYXNz"))
+				gomega.Expect(err).Should(gomega.BeNil())
+				gomega.Expect(res.Header.Get("x-forwarded-for")).Should(gomega.Equal("test"))
+				gomega.Expect(lastReq).ShouldNot(gomega.BeNil())
+				gomega.Expect(lastReq.Header.Get("Proxy-Authorization")).Should(gomega.Equal("Basic dXNlcjpwYXNz"))
 			})
 
 			g.It("Should propagate cookies", func() {
 				proxiedHost, _ := url.Parse("http://www.google.com")
 				jar, _ := cookiejar.New(nil)
 				res, err := Request{Uri: proxiedHost.String(), Proxy: ts.URL, CookieJar: jar}.Do()
-				Expect(err).Should(BeNil())
-				Expect(res.Header.Get("x-forwarded-for")).Should(Equal("test"))
+				gomega.Expect(err).Should(gomega.BeNil())
+				gomega.Expect(res.Header.Get("x-forwarded-for")).Should(gomega.Equal("test"))
 
-				Expect(jar.Cookies(proxiedHost)).Should(HaveLen(1))
-				Expect(jar.Cookies(proxiedHost)[0].Name).Should(Equal("foo"))
-				Expect(jar.Cookies(proxiedHost)[0].Value).Should(Equal("bar"))
+				gomega.Expect(jar.Cookies(proxiedHost)).Should(gomega.HaveLen(1))
+				gomega.Expect(jar.Cookies(proxiedHost)[0].Name).Should(gomega.Equal("foo"))
+				gomega.Expect(jar.Cookies(proxiedHost)[0].Value).Should(gomega.Equal("bar"))
 			})
 
 			g.It("Should use ProxyConnectHeader authentication", func() {
@@ -1071,8 +1070,8 @@ func TestRequest(t *testing.T) {
 					Insecure: true,
 				}.WithProxyConnectHeader("X-TEST-HEADER", "TEST").Do()
 
-				Expect(err).ShouldNot(BeNil())
-				Expect(lastReq.Header.Get("X-TEST-HEADER")).Should(Equal("TEST"))
+				gomega.Expect(err).ShouldNot(gomega.BeNil())
+				gomega.Expect(lastReq.Header.Get("X-TEST-HEADER")).Should(gomega.Equal("TEST"))
 			})
 
 		})
@@ -1107,21 +1106,21 @@ func TestRequest(t *testing.T) {
 					BasicAuthUsername: "username",
 					BasicAuthPassword: "password",
 				}.Do()
-				Expect(err).Should(BeNil())
+				gomega.Expect(err).Should(gomega.BeNil())
 				str, _ := res.Body.ToString()
-				Expect(res.StatusCode).Should(Equal(200))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(200))
 				expectedStr := "Basic " + base64.StdEncoding.EncodeToString([]byte("username:password"))
-				Expect(str).Should(Equal(expectedStr))
+				gomega.Expect(str).Should(gomega.Equal(expectedStr))
 			})
 
 			g.It("Should fail when basic http authorization is required and not provided", func() {
 				res, err := Request{
 					Uri: ts.URL + "/basic_auth",
 				}.Do()
-				Expect(err).Should(BeNil())
+				gomega.Expect(err).Should(gomega.BeNil())
 				str, _ := res.Body.ToString()
-				Expect(res.StatusCode).Should(Equal(401))
-				Expect(str).Should(Equal("private"))
+				gomega.Expect(res.StatusCode).Should(gomega.Equal(401))
+				gomega.Expect(str).Should(gomega.Equal("private"))
 			})
 		})
 	})
@@ -1147,8 +1146,8 @@ func Test_paramParse(t *testing.T) {
 		Corge       string `url:"corge"`
 	}
 
-	g := Goblin(t)
-	RegisterFailHandler(func(m string, _ ...int) { g.Fail(m) })
+	g := goblin.Goblin(t)
+	gomega.RegisterFailHandler(func(m string, _ ...int) { g.Fail(m) })
 	var form = Form{}
 	var aform = AnnotedForm{}
 	var eform = EmbedForm{}
@@ -1170,46 +1169,46 @@ func Test_paramParse(t *testing.T) {
 		})
 		g.It("Should accept struct and ignores unexported field", func() {
 			str, err := paramParse(form)
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal(result))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal(result))
 		})
 		g.It("Should accept struct and use the field annotations", func() {
 			str, err := paramParse(aform)
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal("foo_bar=xyz&norf=abc"))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal("foo_bar=xyz&norf=abc"))
 		})
 		g.It("Should accept pointer of struct", func() {
 			str, err := paramParse(&form)
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal(result))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal(result))
 		})
 		g.It("Should accept recursive pointer of struct", func() {
 			f := &form
 			ff := &f
 			str, err := paramParse(ff)
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal(result))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal(result))
 		})
 		g.It("Should accept embedded struct", func() {
 			str, err := paramParse(eform)
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal("a=1&b=2&corge=xxx&foo_bar=xyz&norf=abc"))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal("a=1&b=2&corge=xxx&foo_bar=xyz&norf=abc"))
 		})
 		g.It("Should accept interface{} which forcely converted by struct", func() {
 			str, err := paramParse(interface{}(&form))
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal(result))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal(result))
 		})
 
 		g.It("Should accept url.Values", func() {
 			str, err := paramParse(values)
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal(result))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal(result))
 		})
 		g.It("Should accept &url.Values", func() {
 			str, err := paramParse(&values)
-			Expect(err).Should(BeNil())
-			Expect(str).Should(Equal(result))
+			gomega.Expect(err).Should(gomega.BeNil())
+			gomega.Expect(str).Should(gomega.Equal(result))
 		})
 	})
 
